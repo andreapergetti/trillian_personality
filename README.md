@@ -47,4 +47,4 @@ python3.8 -m grpc_tools.protoc \
 --proto_path=. --python_out=. \
 --grpc_python_out=. sigpb.proto
 ```
-In seguito, si può usare il codice presente nel jupyter-notebook(installarlo con pip install notebook), presente in questa repository, per usare le API.
+Afterwards, you can download the jupyter-notebook file in this repository, to see examples of use of the API.
