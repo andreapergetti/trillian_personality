@@ -1,0 +1,15 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+grpcio = "==1.36.1"
+grpcio-tools = "==1.36.1"
+google-api-python-client = "==2.0.2"
+pure-protobuf = "==2.0.1"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"

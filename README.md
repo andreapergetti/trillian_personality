@@ -17,14 +17,9 @@ docker-compose -f examples/deployment/docker-compose.yml up
 ```
 
 ## Uso delle API
-Possibly create a virtual environment:
+Install dependencies written in the Pipfile.lock file using pipenv:
 ```
-python3.8 -m venv .venv
-source .venv/bin/activate
-```
-Download requirements library with the file in this repository:
-```
-pip install -r requirements.txt
+pipenv install --ignore-pipfile
 ```
 Installare le definizioni per il protocol buffer per le API di google:
 ```
