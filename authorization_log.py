@@ -140,14 +140,17 @@ class Trillian:
         '''Decode a JWT'''
         try:
             data = jwt.decode(jwt=token, key=authorization_server_pk, issuer=self.allowed_servers,
-                              algorithms=self.allowed_algorithms, options={"verify_iss":True,
-                                                                           "require_exp":True,
-                                                                           "verify_exp":True,
+                              algorithms=self.allowed_algorithms, options={"require_exp":True,
+                                                                           "verify_exp":True, 
+                                                                          # "verify_iss":True,
                                                                            "require_nbf":True})
+            if data["issuer"] not in self.allowed_servers:
+                print("Invalid issuer")
+                return
             return data
-        except jwt.exceptions.InvalidIssuerError:
-            print("Invalid issuer")
-            return
+#        except jwt.exceptions.InvalidIssuerError:
+#            print("Invalid issuer")
+#            return
         except jwt.exceptions.ExpiredSignatureError:
             print("The token has expired")
             return
