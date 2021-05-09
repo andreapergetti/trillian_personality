@@ -21,12 +21,12 @@ Install dependencies written in the Pipfile.lock file using pipenv:
 ```
 pipenv install --ignore-pipfile
 ```
-Installare le definizioni per il protocol buffer per le API di google:
+Install the definitions for the protocol buffer for the google's API:
 ```
 git clone ssh://git@github.com/googleapis/googleapis.git \
 $HOME/go/src/github.com/googleapis/googleapis
 ```
-Copiare nella directory corrente:
+Copy it to the current directory:
 ```
 cp -r $HOME/go/src/github.com/googleapis/googleapis/google .
 ```
@@ -48,4 +48,10 @@ python3.8 -m grpc_tools.protoc \
 --proto_path=. --python_out=. \
 --grpc_python_out=. sigpb.proto
 ```
-Afterwards, you can download the jupyter-notebook file in this repository, to see examples of use of the API.
+Afterwards, you can run the using_api.ipynb notebook in this repository, to see examples of use of the API.
+
+
+## Trillian Personality
+The personality want to simulate an Authorization server, which can authorize a client to access a server by generating a JSON Web Token with specific information, and a Trillian server, that can decode the JWT and log the information extracted in a Merkle Tree.   
+The class and the methods of this personality are in the authorization_log.py module. You can watch an example of use of this module in the personality.ipynb notebook.
+
