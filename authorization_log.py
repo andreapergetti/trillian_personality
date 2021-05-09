@@ -51,7 +51,6 @@ class AuthorizationServer:
         return token
 
 
-
 class Trillian:
     def __init__(self, key_pair, key_algorithm=['ES256','RS256'], allowed_servers={}):
         '''Initialize the trillian personality with its key pair,
@@ -169,12 +168,10 @@ class Trillian:
         try:
             data = jwt.decode(jwt=token, key=authorization_server_pk,
                               algorithms=self.allowed_algorithms, 
-                              options={"require_exp":True,"verify_exp":True,
+                              options={"require_exp":True, "verify_exp":True,
                                        # "verify_iss":True,
-                                       "require_nbf":True})
-#        except jwt.exceptions.InvalidIssuerError:
-#            print("Invalid issuer")
-#            return
+                                       "require_nbf":True, 
+                                       "verify_signature":True})
         except jwt.exceptions.ExpiredSignatureError as e:
             print("The token has expired")
             logging.exception(e)
@@ -183,6 +180,15 @@ class Trillian:
             print("The validity of the token has not started")
             logging.exception(e)
             raise ValueError("Immature Token") from e
+        except jwt.exceptions.InvalidSignatureError as e:
+            print("The signature does not match the one "
+                  "provided as part of the token")
+            logging.exception(e)
+            raise ValueError("Invalid signature") from e
+        except jwt.exceptions.DecodeError as e:
+            print("Token cannot be decoded because it failed validation")
+            logging.exception(e)
+            raise ValueError("Failed validation") from e
         except jwt.exceptions.InvalidTokenError as e:
             print("Invalid token")
             logging.exception(e)
@@ -192,6 +198,9 @@ class Trillian:
                 authorization_server_pk:
             print("Invalid issuer")
             raise ValueError("Invalid Issuer")
+#        except jwt.exceptions.InvalidIssuerError:
+#            print("Invalid issuer")
+#            return
         return data
 
 
@@ -199,13 +208,11 @@ class Trillian:
         data = self.decode_jwt(token, authorization_server_pk)
         print(data)
         if data is not None:
-            #leaf_value = {'client':data["client"], 'server':data["server"]}
-            #leaf_value_serialize = list(sorted(leaf_value.items()))
             leaf_value = json.dumps({'client':data["client"], 
                                      'server':data["server"], 'id':data["id"], 
                                      'exp':data["exp"], 'nbf':data["nbf"]},  
                                      sort_keys=True)
-            leaf_identity = f"{data['client']} {data['server']}"
+            leaf_identity = f"{data['client']} {data['server']} {data['id']}"
             m = hashlib.sha256()
             m.update(f'{leaf_identity}'.encode())
             leaf_identity_hash = m.digest()
@@ -213,25 +220,35 @@ class Trillian:
             leaf_added = self.queue_leaf(self.tree_id, leaf_value, leaf_identity_hash)
             print(f'Leaf added:\n{leaf_added}')
             time.sleep(1)     #Waiting to be sure that the leaf has been added
-            inclusion = leaf_added.queued_leaf.leaf.leaf_index
+            #inclusion = leaf_added.queued_leaf.leaf.leaf_index
             merkle_leaf_hash = leaf_added.queued_leaf.leaf.merkle_leaf_hash
-            #print(f'Index: {leaf_index}\n Hash:{merkle_leaf_hash}')
-            if inclusion != -1:
+            status_code = leaf_added.queued_leaf.status.code
+            if status_code == 0:
                 self.tree_size += 1
-                inclusion_proof = self.inclusion_proof_by_hash(self.tree_id, 
-                                                               merkle_leaf_hash, 
-                                                               self.tree_size)
+                while True:
+                    inclusion_proof = self.inclusion_proof_by_hash(self.tree_id, 
+                                                                   merkle_leaf_hash, 
+                                                                   self.tree_size)
+                    if inclusion_proof is not None:
+                        break
                 print(f'Inclusion Proof:\n{inclusion_proof}')
                 leaf_index = inclusion_proof.proof[0].leaf_index
                 self.update_info(data, leaf_index)
-            else:
+            elif status_code == 6:
                 print("Leaf already present in the log")
-                self.verify_inclusion(data["client"], data["server"])
-            #leaf_index = inclusion_proof.proof.leaf_index
+                inclusion_proof = self.verify_inclusion(data["client"], 
+                                                        data["server"], 
+                                                        datetime.utcnow().isoformat())
+            elif status_code == 9:
+                print("The operation was rejected because the system is not "
+                      "in a state required for the operation's execution")
+            elif status_code == 3:
+                print("The client specified an invalid argument")
+            return inclusion_proof
             
 
 
-    def check_server(self, server):
+    def client_connected_to_server(self, server):
         '''Check if a server is in the log and, if it is, print clients
         that are allowed to access it'''
         try:
@@ -242,7 +259,7 @@ class Trillian:
             raise KeyError("The server is not present in the log") from e
 
 
-    def check_client(self, client):
+    def server_connected_to_client(self, client):
         '''Check if a client is in the log and, if it is, print servers
         that he has permission to access'''
         try:
@@ -253,17 +270,19 @@ class Trillian:
             raise KeyError("The client is not present in the log") from e
             
     
-    def verify_inclusion(self, client, resource_server):
-        server_connected = self.check_client(client)
+    def verify_inclusion(self, client, resource_server, time):
+        server_connected = self.server_connected_to_client(client)
         #[server, id, start_validity, expiration_time]
         servers = [server for server in server_connected 
                   if server[0] == resource_server]
-        if servers is not None:
-            for server in servers:
-                if datetime.fromtimestamp(server[3]) >= datetime.utcnow():
-                    leaf_id = server[1]
-                    print(f"Inclusion proof:\n"
-                          f"{self.inclusion_proof(self.tree_id, leaf_id, self.tree_size)}")
-        else:
-            print("The client is not allowed in the server")
-        
+        for server in servers:
+            if datetime.fromtimestamp(server[3]) >= datetime.fromisoformat(time):
+                leaf_id = server[1]
+                inclusion_proof = self.inclusion_proof(self.tree_id, leaf_id,
+                                                       self.tree_size)
+                print(f"Inclusion proof:\n"
+                      f"{inclusion_proof}")
+                return inclusion_proof
+        print("The client is not allowed in the server")
+        return None
+       
