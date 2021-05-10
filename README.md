@@ -1,4 +1,12 @@
 # trillian
+----
+- [Configuration of Trillian](##configuration-of-trillian)
+- [Trillian's API](##use-of-the-api)
+- [Personality](##personality)
+
+----
+
+## Configuration of Trillian
 To build and test Trillian you need:
 - Go 1.14 or later
 - MySQL or MariaDB to provide the data storage layer
@@ -16,7 +24,7 @@ For simple deployments, running in a container is an easy way to get up and runn
 docker-compose -f examples/deployment/docker-compose.yml up
 ```
 
-## Uso delle API
+## Trillian's API
 Install dependencies written in the Pipfile.lock file using pipenv:
 ```
 pipenv install --ignore-pipfile
@@ -48,10 +56,11 @@ python3.8 -m grpc_tools.protoc \
 --proto_path=. --python_out=. \
 --grpc_python_out=. sigpb.proto
 ```
-Afterwards, you can run the using_api.ipynb notebook in this repository, to see examples of use of the API.
+Afterwards, you can run the [using_api.ipynb](./using_api.ipynb) notebook in this repository, to see examples of use of the Trillian's API.
 
 
-## Trillian Personality
+## Personality
 The personality want to simulate an Authorization server, which can authorize a client to access a server by generating a JSON Web Token with specific information, and a Trillian server, that can decode the JWT and log the information extracted in a Merkle Tree.   
-The class and the methods of this personality are in the authorization_log.py module. You can watch an example of use of this module in the personality.ipynb notebook.
+The class and the methods of this personality are in the [authorization_log.py](./authorization_log.py) module. You can watch an example of use of this module in the [personality.ipynb](./personality.ipynb) notebook.
+You can find the documentation of the personality's API in the [api.md](./api.md).
 
