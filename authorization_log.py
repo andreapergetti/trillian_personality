@@ -276,7 +276,8 @@ class Trillian:
         servers = [server for server in server_connected 
                   if server[0] == resource_server]
         for server in servers:
-            if datetime.fromtimestamp(server[3]) >= datetime.fromisoformat(time):
+            if datetime.fromtimestamp(server[3]) >= datetime.fromisoformat(time) \
+                and datetime.fromtimestamp(server[2]) <= datetime.fromisoformat(time):
                 leaf_id = server[1]
                 inclusion_proof = self.inclusion_proof(self.tree_id, leaf_id,
                                                        self.tree_size)
