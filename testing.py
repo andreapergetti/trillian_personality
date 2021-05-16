@@ -46,15 +46,6 @@ class TestPersonality(unittest.TestCase):
         self.assertEqual('C', data["client"])
         self.assertEqual('R', data["server"])
         
-        # Test using a wrong public key for decode the JWT
-        token = self.auth.generate_jwt(client='C',server='R')
-        wrong_key_pair = AuthorizationServer.generate_key()
-        self.auth.pk = wrong_key_pair[1].public_bytes(encoding=serialization.Encoding.PEM,
-                                            format=serialization.PublicFormat.
-                                            SubjectPublicKeyInfo)
-        with self.assertRaises(ValueError):
-            data = self.personality.decode_jwt(token, self.auth.pk)
-        
         # Test with the authorization server that is not allowed by 
         # the personality to insert JWT
         self.personality.allowed_servers = {}
@@ -62,6 +53,15 @@ class TestPersonality(unittest.TestCase):
         with self.assertRaises(ValueError):
             data = self.personality.decode_jwt(token, self.auth.pk)
         
+        # Test using a wrong public key for decode the JWT
+        self.personality.allowed_servers = {'urn:auth':self.auth.pk}
+        token = self.auth.generate_jwt(client='C',server='R')
+        wrong_key_pair = AuthorizationServer.generate_key()
+        self.auth.pk = wrong_key_pair[1].public_bytes(encoding=serialization.Encoding.PEM,
+                                            format=serialization.PublicFormat.
+                                            SubjectPublicKeyInfo)
+        with self.assertRaises(ValueError):
+            data = self.personality.decode_jwt(token, self.auth.pk)     
     
         
     def test_adding_jwt(self):
