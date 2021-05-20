@@ -1,64 +1,8 @@
 # trillian
 ----
-- [Configuration of Trillian](#configuration-of-trillian)
-- [Trillian's API](#trillian's-api)
 - [Personality](#personality)
-
 ----
 
-<a name="configuration-of-trillian"></a>
-## Configuration of Trillian
-To build and test Trillian you need:
-- Go 1.14 or later
-- MySQL or MariaDB to provide the data storage layer
-
-To fetch the code, dependencies, and build Trillian, run the following:
-```
-export GO111MODULE=auto
-git clone https://github.com/google/trillian.git --branch v1.3.13
-cd trillian
-go build ./...
-```
-
-For simple deployments, running in a container is an easy way to get up and running with a local database. To use Docker to run and interact with Trillian, use:
-```
-docker-compose -f examples/deployment/docker-compose.yml up
-```
-
-<a name="trillian's-api"></a>
-## Trillian's API
-Install dependencies written in the Pipfile.lock file using pipenv:
-```
-pipenv install --ignore-pipfile
-```
-Install the definitions for the protocol buffer for the google's API:
-```
-git clone ssh://git@github.com/googleapis/googleapis.git \
-$HOME/go/src/github.com/googleapis/googleapis
-```
-Copy it to the current directory:
-```
-cp -r $HOME/go/src/github.com/googleapis/googleapis/google .
-```
-Use protocol buffer compiler to produce Python output from the definitions of the protocol(file .proto). For every *namefile*.proto file in input, it generates *namefile*_pb2.py which contains our generated request and response classes and *namefile*_pb2_grpc.py which contains our generated client and server classes.
-```
-python3.8 -m grpc_tools.protoc \
---proto_path=. --python_out=. \
---grpc_python_out=. \
-trillian_admin_api.proto \
-trillian_log_api.proto	trillian.proto 
-
-cd crypto/keyspb
-python3.8 -m grpc_tools.protoc \
---proto_path=. --python_out=. \
---grpc_python_out=. keyspb.proto
-
-cd crypto/sigpb
-python3.8 -m grpc_tools.protoc \
---proto_path=. --python_out=. \
---grpc_python_out=. sigpb.proto
-```
-Afterwards, you can run the [using_api.ipynb](./using_api.ipynb) notebook in this repository, to see examples of use of the Trillian's API.
 
 <a name="personality"></a>
 ## Personality
@@ -66,3 +10,22 @@ The personality want to simulate an Authorization server, which can authorize a 
 The class and the methods of this personality are in the [authorization_log.py](./authorization_log.py) module. You can watch an example of use of this module in the [personality.ipynb](./personality.ipynb) notebook.
 You can find the documentation of the personality's API in the [api.md](./api.md).
 
+<br/>
+
+To build and test you need:
+- Python 3.8 or later
+- MySQL or MariaDB to provide the data storage layer
+
+<br/>
+
+Install dependencies written in the [Pipfile.lock](./Pipfile.lock) file using pipenv:
+```
+pipenv install --ignore-pipfile
+```
+
+<br/>
+
+For simple deployments, running in a container is an easy way to get up and running with a local database. To use Docker to run and interact with the personality, use:
+```
+docker-compose -f docker-compose.yml up
+```
